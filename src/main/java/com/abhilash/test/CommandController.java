@@ -1,24 +1,15 @@
 package com.abhilash.test;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
+
 
 @RestController
 public class CommandController {
@@ -65,25 +56,39 @@ public class CommandController {
 	        
 	       return "SUCCESS";
 	    }
-	@CrossOrigin(origins = "http://localhost:8080")
-	@RequestMapping(value = "/action" , method=RequestMethod.POST)
-	   public String updateModel(@RequestBody String inputmodel) throws IOException, InterruptedException {
+	
+	@RequestMapping(value = "/action" , method=RequestMethod.GET)
+	   public String updateModel(@RequestParam ("eventName") String eventName) throws IOException, InterruptedException {
 			
-		model = inputmodel;
+		System.out.println("eventName = " + eventName);
+		String tag = "<html><h1><center>Deployment is ";
+		String output = "unknown";
+		String endtag = "<center></html>";
+		String messageToSend = "";
 		
 		
-	        Message.deploy = model;
-//	        	 ServerSocket server = new ServerSocket(9090);
-//	        	 System.out.println("Server has started on 127.0.0.1:9090.\r\nWaiting for a connection…");
-//	        			 Socket client = server.accept();
-//	        			 System.out.println("A client connected.");
-//	        			 DataOutputStream dout=new DataOutputStream(client.getOutputStream()); 
-//	        			 BufferedReader br=new BufferedReader(new InputStreamReader(System.in));  
-//	        			 dout.writeUTF(model);  
-//	        			 dout.flush();  
-//	        			 Thread.sleep(100);
-//	      
-	        
-	       return "SUCCESS";
+		if (eventName.equalsIgnoreCase("AuditOnly"))
+			messageToSend = "You can only hear Audio because this car is Radio.";
+		else if(eventName.equalsIgnoreCase("DisplayOnly"))
+			messageToSend = "You can not  hear Audio because this car is out of Battery.";
+		else if(eventName.equalsIgnoreCase("AudioWithDisplay"))
+			messageToSend = "You can only hear Audio because this car is Radio.";
+		else
+			messageToSend = "This car is junk";
+		
+		try {
+					WebSocketClient wsc = new WebSocketClient();;
+			        wsc.Connect("ws://192.168.0.25:9000");			        
+			        wsc.SendMessage(messageToSend);
+			        Thread.sleep(1000);
+			        wsc.Disconnect();
+			        output = "Success";
+		}
+		catch(Exception e)
+		{
+			output = "Failed";
+		}
+		
+	       return tag+output+endtag;
 	    }
    }
